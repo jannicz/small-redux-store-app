@@ -1,3 +1,7 @@
+var render = () => {
+    $('.js-todo').append('<p> New State'  + JSON.stringify(store.getState().todo, null, '  ') + '</p>');
+}
+
 /**
  * Reducer for creating and editing todos
  *
@@ -16,7 +20,7 @@ const todosReducer = (state = [], action) => {
 
     switch (action.type) {
         case 'ADD_TODO':
-            // Reducer ADD
+            // Reducer ADD, use spread-operator
             return [
                 ...state,
                 {
@@ -119,11 +123,31 @@ const testToggleTodo = () => {
 };
 
 /**
+ * Redux.combineReducers reimplementation for better understanding
+ * @param reducers
+ * @returns {function(*=, *=)}
+ */
+const combineReducer = (reducers) => {
+    return (state = {}, action) => {
+        return Object.keys(reducers).reduce(
+            (nextState, key) => {
+                nextState[key] = reducers[key](
+                    state[key],
+                    action
+                );
+                return nextState;
+            },
+            {}
+        );
+    };
+};
+
+/**
  * Redux store init
  */
 const { createStore } = Redux;
 const store = createStore(
-    Redux.combineReducers({todo: todosReducer, visibility: visibilityReducer}
+    combineReducer({ todo: todosReducer, visibility: visibilityReducer }
     ), []
 );
 
@@ -133,9 +157,9 @@ const store = createStore(
 testAddTodo();
 testToggleTodo();
 
-console.log('All tests passed');
+console.log('%cAll tests passed', 'color: green');
 $('.js-body').html('All tests passed');
-
+store.subscribe(render);
 
 console.log('Store initial State', store.getState());
 
@@ -144,25 +168,28 @@ store.dispatch({
     id: 1,
     text: 'Learn Redux'
 });
-store.dispatch({
-    type: 'SET_VISIBILITY_FILTER',
-    filter: 'SHOW_FIRST'
-});
-
 console.log('dispatch first...', store.getState());
 store.dispatch({
     type: 'ADD_TODO',
     id: 2,
     text: 'Go shopping'
 });
-console.log('dispatch first...', store.getState());
+
+console.log('dispatch second...', store.getState());
 store.dispatch({
     type: 'TOGGLE_TODO',
     id: 1
 });
+console.log('toggle first...', store.getState());
+store.dispatch({
+    type: 'SET_VISIBILITY_FILTER',
+    filter: 'SHOW_FIRST'
+});
+console.log('set visibility...', store.getState());
 store.dispatch({
     type: 'ADD_TODO',
     id: 3,
     text: 'Go swimming'
 });
-console.log('dispatch second...', store.getState());
+
+console.log('dispatch third...', store.getState());
